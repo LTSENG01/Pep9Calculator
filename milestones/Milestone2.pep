@@ -6,10 +6,6 @@ main:    CALL    getInp
 
          LDBA    '\n',i      ; Newline
          STBA    charOut,d
-
-         LDWA    0,i         ; Reset result
-         STWA    result,d
-
          BR      main        ; Loop
 
          STOP
@@ -29,11 +25,6 @@ getInp:  DECI    num1,d      ; Max is 32767 (32768 overflows)
 ; Determine operation subroutine (subtracts the DEC value from the ASCII input to check for each operation)
 detOp:   LDWA    0,i         ; Reset accumulator
          LDBA    oper,d      ; Go to Add
-         SUBA    42,i        ; (DEC 42 from ASCII Table)
-         BREQ    mult
-
-         LDWA    0,i         ; Reset accumulator
-         LDBA    oper,d      ; Go to Add
          SUBA    43,i        ; (DEC 43 from ASCII Table)
          BREQ    add
          
@@ -45,32 +36,6 @@ detOp:   LDWA    0,i         ; Reset accumulator
          STRO    errorOp,d   ; Invalid Operation message
          LDWA    0,i         ; Reset accumulator
          RET
-
-; Multiplication subroutine (Loops, multiplies two numbers together)
-mult:    LDWA    num2,d      ; num1 = ToBeMultiplied, num2 = Multiplier
-         BREQ    outAnsw     ; Once loop is finished, print answer
-         BRLT    multInv
-
-         SUBA    1,i         ; subtract one from loop
-         STWA    num2,d      
-         
-         LDWA    result,d    ; Add num1 to result
-         ADDA    num1,d
-         BRV     prOver      ; If overflow, print message
-         STWA    result,d
-
-         BR      mult
-         RET 
-
-; Multiplication negative inverter
-multInv: LDWA    0,i
-         SUBA    num2,d      ; If num2 is negative, invert num2 and num1
-         STWA    num2,d
-
-         LDWA    0,i
-         SUBA    num1,d
-         STWA    num1,d
-         BR      mult
 
 ; Addition subroutine  (Adds the second number to the first)
 add:     LDWA    num1,d
