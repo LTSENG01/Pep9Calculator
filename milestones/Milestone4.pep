@@ -9,6 +9,8 @@ main:    CALL    getInp
 
          LDWA    0,i         ; Reset result
          STWA    result,d
+         STWA    num1,d      ; reset num1
+         STWA    num2,d      ; reset num2
 
          BR      main        ; Loop
 
@@ -28,9 +30,14 @@ getInp:  DECI    num1,d      ; Max is 32767 (32768 overflows)
 
 ; Determine operation subroutine (subtracts the DEC value from the ASCII input to check for each operation)
 detOp:   LDWA    0,i         ; Reset accumulator
-         LDBA    oper,d      ; Go to Add
+         LDBA    oper,d      ; Go to Multiply
          SUBA    42,i        ; (DEC 42 from ASCII Table)
          BREQ    mult
+
+         LDWA    0,i         ; Reset accumulator
+         LDBA    oper,d      ; Go to Divide
+         SUBA    47,i        ; (DEC 47 from ASCII Table)
+         BREQ    divide
 
          LDWA    0,i         ; Reset accumulator
          LDBA    oper,d      ; Go to Add
@@ -60,18 +67,55 @@ mult:    LDWA    num2,d      ; num1 = ToBeMultiplied, num2 = Multiplier
          STWA    result,d
 
          BR      mult
-         RET 
+         RET
 
 ; Multiplication negative inverter
-multInv: LDWA    0,i
-         SUBA    num2,d      ; If num2 is negative, invert num2 and num1
+multInv: LDWA    num2,d
+         NEGA                ; If num2 is negative, invert num2 and num1
          STWA    num2,d
 
-         LDWA    0,i
-         SUBA    num1,d
+         LDWA    num1,d
+         NEGA    
          STWA    num1,d
          BR      mult
 
+; Division subroutine (Loops, subtracts second num from first num, increments result)  
+divide:  LDWA    num2,d      
+         BRLT    divInv2
+
+         LDWA    num1,d      ; Load the starting number
+         BRLT    divInv1 
+
+         SUBA    num2,d      ; Subtract the divisor
+         STWA    num1,d      ; Store the result as starting number
+         LDWA    result,d    ; Load the previous dividend
+         ADDA    1,i         ; Add one
+         STWA    result,d    ; Store the current dividend
+         
+         ; check
+         LDWA    num1,d      ; Check routine, load starting number
+         SUBA    num2,d      ; Subtract divisor
+         BRLT    outAnsw     ; If divisor < starting number, then it is done
+         BR      divide      ; Else loop back to divide
+
+divInv1: NEGA
+         STWA    num1,d
+         LDWA    num1Neg,d
+         ADDA    1,i
+         STWA    num1Neg,d
+         RET
+
+divInv2: NEGA
+         STWA    num2,d
+         LDWA    num2Neg,d
+         ADDA    1,i
+         STWA    num2Neg,d
+         RET
+
+; negativeVariableFlags
+num1Neg: .WORD   0
+num2Neg: .WORD   0
+         
 ; Addition subroutine  (Adds the second number to the first)
 add:     LDWA    num1,d
          ADDA    num2,d
@@ -95,10 +139,6 @@ outAnsw: STRO    eqSign,d
 
 ; Overflow error message
 prOver:  STRO    overMsg,d
-         LDWA    0,i         ; reset accumulator
-         STWA    num1,d      ; reset num1
-         STWA    num2,d      ; reset num2
-         STWA    result,d    ; reset result
          BR      main
 
 ; Data
