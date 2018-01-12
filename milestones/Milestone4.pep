@@ -82,10 +82,15 @@ multInv: LDWA    num2,d
          BR      mult
 
 ; Division subroutine (Loops, subtracts second num from first num, increments result)  
-divide:  LDWA    num2,d      
+divide:  LDWA    num2,d 
+         BREQ    prErrZer     
          BRLT    divInv2
 
+         SUBA    num1,d      ; If num2 > num1
+         BRGT    answZero    ; Answer = 0    
+
          LDWA    num1,d      ; Load the starting number
+         BREQ    answZero    ; If num1 = 0, Answer = 0
          BRLT    divInv1
 
          LDWA    num1,d
@@ -101,6 +106,7 @@ divide:  LDWA    num2,d
          BRLT    outAnsw     ; If divisor < starting number, then it is done
          BR      divide      ; Else loop back to divide
 
+; Negate the 1st number
 divInv1: NEGA                ; If num1 is negative, negate it
          STWA    num1,d
          LDWA    num1Neg,d   ; Set num1Neg flag to 1
@@ -108,6 +114,7 @@ divInv1: NEGA                ; If num1 is negative, negate it
          STWA    num1Neg,d
          BR      divide
 
+; Negate the 2nd number
 divInv2: NEGA                ; If num2 is negative, negate it
          STWA    num2,d
          LDWA    num2Neg,d   ; Set num2Neg flag to 1
@@ -115,6 +122,7 @@ divInv2: NEGA                ; If num2 is negative, negate it
          STWA    num2Neg,d
          BR      divide
 
+; Checks if any numbers are negative
 checkNeg:LDWA    num1Neg,d
          ANDA    num2Neg,d   ; 1 if both flags are set (answer is +), else 0
          BRGT    resetNeg
@@ -124,6 +132,12 @@ checkNeg:LDWA    num1Neg,d
          BRGT    printNeg
          RET
 
+; If answer is automatically zero, print it out
+answZero:LDWA    0,i
+         STWA    result,d
+         BR      outAnsw
+
+; if negative, prints a - symbol
 printNeg:LDBA    '-',i
          STBA    charOut,d
 
@@ -131,10 +145,15 @@ printNeg:LDBA    '-',i
                
          BR      checkNeg
 
+; resets the divisio negative flags
 resetNeg:LDWA    0,i
          STWA    isNeg,d     ; reset isNeg to 0
          STWA    num1Neg,d
          STWA    num2Neg,d
+         RET
+
+; Prints error message when dividing by zero
+prErrZer:STRO    divZero,d
          RET
 
 ; negativeVariableFlags
@@ -179,6 +198,8 @@ oper:    .ASCII  "\x00"
 errorOp: .ASCII  "Error: Invalid Operation\n\x00"
 
 overMsg: .ASCII  "Error: Overflow\n\x00"
+
+divZero: .ASCII  "Error: Division by zero\n\x00"
 
 introMsg: .ASCII "+---------------+\n| Calculator v1 |\n| by Larry T    |\n+---------------+\n\n\x00" 
 
