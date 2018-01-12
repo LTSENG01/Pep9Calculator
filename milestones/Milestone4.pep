@@ -1,5 +1,7 @@
 ; Created by Larry Tseng 2018.
 
+         STRO    introMsg,d  ; Display intro message
+
 ; Main routine (calls input and operation determiner subroutines, prints a newline, loops)
 main:    CALL    getInp
          CALL    detOp
@@ -84,8 +86,9 @@ divide:  LDWA    num2,d
          BRLT    divInv2
 
          LDWA    num1,d      ; Load the starting number
-         BRLT    divInv1 
+         BRLT    divInv1
 
+         LDWA    num1,d
          SUBA    num2,d      ; Subtract the divisor
          STWA    num1,d      ; Store the result as starting number
          LDWA    result,d    ; Load the previous dividend
@@ -98,23 +101,46 @@ divide:  LDWA    num2,d
          BRLT    outAnsw     ; If divisor < starting number, then it is done
          BR      divide      ; Else loop back to divide
 
-divInv1: NEGA
+divInv1: NEGA                ; If num1 is negative, negate it
          STWA    num1,d
-         LDWA    num1Neg,d
-         ADDA    1,i
+         LDWA    num1Neg,d   ; Set num1Neg flag to 1
+         ADDA    1,i         
          STWA    num1Neg,d
+         BR      divide
+
+divInv2: NEGA                ; If num2 is negative, negate it
+         STWA    num2,d
+         LDWA    num2Neg,d   ; Set num2Neg flag to 1
+         ADDA    1,i
+         STWA    num2Neg,d
+         BR      divide
+
+checkNeg:LDWA    num1Neg,d
+         ANDA    num2Neg,d   ; 1 if both flags are set (answer is +), else 0
+         BRGT    resetNeg
+         
+         LDWA    num1Neg,d
+         ORA     num2Neg,d   ; 1 if either are negative
+         BRGT    printNeg
          RET
 
-divInv2: NEGA
-         STWA    num2,d
-         LDWA    num2Neg,d
-         ADDA    1,i
+printNeg:LDBA    '-',i
+         STBA    charOut,d
+
+         CALL    resetNeg
+               
+         BR      checkNeg
+
+resetNeg:LDWA    0,i
+         STWA    isNeg,d     ; reset isNeg to 0
+         STWA    num1Neg,d
          STWA    num2Neg,d
          RET
 
 ; negativeVariableFlags
 num1Neg: .WORD   0
 num2Neg: .WORD   0
+isNeg:   .WORD   0
          
 ; Addition subroutine  (Adds the second number to the first)
 add:     LDWA    num1,d
@@ -134,6 +160,7 @@ sub:     LDWA    num1,d
 
 ; Outputs the answer (Prints out an = sign and the answer)
 outAnsw: STRO    eqSign,d
+         CALL    checkNeg
          DECO    result,d
          RET
 
@@ -152,5 +179,7 @@ oper:    .ASCII  "\x00"
 errorOp: .ASCII  "Error: Invalid Operation\n\x00"
 
 overMsg: .ASCII  "Error: Overflow\n\x00"
+
+introMsg: .ASCII "+---------------+\n| Calculator v1 |\n| by Larry T    |\n+---------------+\n\n\x00" 
 
 .end
