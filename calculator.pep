@@ -1,5 +1,7 @@
 ; Created by Larry Tseng 2018.
 
+         STRO    introMsg,d  ; Display intro message
+
 ; Main routine (calls input and operation determiner subroutines, prints a newline, loops)
 main:    CALL    getInp
          CALL    detOp
@@ -9,6 +11,8 @@ main:    CALL    getInp
 
          LDWA    0,i         ; Reset result
          STWA    result,d
+         STWA    num1,d      ; reset num1
+         STWA    num2,d      ; reset num2
 
          BR      main        ; Loop
 
@@ -28,9 +32,14 @@ getInp:  DECI    num1,d      ; Max is 32767 (32768 overflows)
 
 ; Determine operation subroutine (subtracts the DEC value from the ASCII input to check for each operation)
 detOp:   LDWA    0,i         ; Reset accumulator
-         LDBA    oper,d      ; Go to Add
+         LDBA    oper,d      ; Go to Multiply
          SUBA    42,i        ; (DEC 42 from ASCII Table)
          BREQ    mult
+
+         LDWA    0,i         ; Reset accumulator
+         LDBA    oper,d      ; Go to Divide
+         SUBA    47,i        ; (DEC 47 from ASCII Table)
+         BREQ    divide
 
          LDWA    0,i         ; Reset accumulator
          LDBA    oper,d      ; Go to Add
@@ -60,18 +69,98 @@ mult:    LDWA    num2,d      ; num1 = ToBeMultiplied, num2 = Multiplier
          STWA    result,d
 
          BR      mult
-         RET 
+         RET
 
 ; Multiplication negative inverter
-multInv: LDWA    0,i
-         SUBA    num2,d      ; If num2 is negative, invert num2 and num1
+multInv: LDWA    num2,d
+         NEGA                ; If num2 is negative, invert num2 and num1
          STWA    num2,d
 
-         LDWA    0,i
-         SUBA    num1,d
+         LDWA    num1,d
+         NEGA    
          STWA    num1,d
          BR      mult
 
+; Division subroutine (Loops, subtracts second num from first num, increments result)  
+divide:  LDWA    num2,d 
+         BREQ    prErrZer     
+         BRLT    divInv2
+
+         SUBA    num1,d      ; If num2 > num1
+         BRGT    answZero    ; Answer = 0    
+
+         LDWA    num1,d      ; Load the starting number
+         BREQ    answZero    ; If num1 = 0, Answer = 0
+         BRLT    divInv1
+
+         LDWA    num1,d
+         SUBA    num2,d      ; Subtract the divisor
+         STWA    num1,d      ; Store the result as starting number
+         LDWA    result,d    ; Load the previous dividend
+         ADDA    1,i         ; Add one
+         STWA    result,d    ; Store the current dividend
+         
+         ; check
+         LDWA    num1,d      ; Check routine, load starting number
+         SUBA    num2,d      ; Subtract divisor
+         BRLT    outAnsw     ; If divisor < starting number, then it is done
+         BR      divide      ; Else loop back to divide
+
+; Negate the 1st number
+divInv1: NEGA                ; If num1 is negative, negate it
+         STWA    num1,d
+         LDWA    num1Neg,d   ; Set num1Neg flag to 1
+         ADDA    1,i         
+         STWA    num1Neg,d
+         BR      divide
+
+; Negate the 2nd number
+divInv2: NEGA                ; If num2 is negative, negate it
+         STWA    num2,d
+         LDWA    num2Neg,d   ; Set num2Neg flag to 1
+         ADDA    1,i
+         STWA    num2Neg,d
+         BR      divide
+
+; Checks if any numbers are negative
+checkNeg:LDWA    num1Neg,d
+         ANDA    num2Neg,d   ; 1 if both flags are set (answer is +), else 0
+         BRGT    resetNeg
+         
+         LDWA    num1Neg,d
+         ORA     num2Neg,d   ; 1 if either are negative
+         BRGT    printNeg
+         RET
+
+; If answer is automatically zero, print it out
+answZero:LDWA    0,i
+         STWA    result,d
+         BR      outAnsw
+
+; if negative, prints a - symbol
+printNeg:LDBA    '-',i
+         STBA    charOut,d
+
+         CALL    resetNeg
+               
+         BR      checkNeg
+
+; resets the divisio negative flags
+resetNeg:LDWA    0,i
+         STWA    isNeg,d     ; reset isNeg to 0
+         STWA    num1Neg,d
+         STWA    num2Neg,d
+         RET
+
+; Prints error message when dividing by zero
+prErrZer:STRO    divZero,d
+         RET
+
+; negativeVariableFlags
+num1Neg: .WORD   0
+num2Neg: .WORD   0
+isNeg:   .WORD   0
+         
 ; Addition subroutine  (Adds the second number to the first)
 add:     LDWA    num1,d
          ADDA    num2,d
@@ -90,6 +179,7 @@ sub:     LDWA    num1,d
 
 ; Outputs the answer (Prints out an = sign and the answer)
 outAnsw: STRO    eqSign,d
+         CALL    checkNeg
          DECO    result,d
          RET
 
@@ -108,5 +198,9 @@ oper:    .ASCII  "\x00"
 errorOp: .ASCII  "Error: Invalid Operation\n\x00"
 
 overMsg: .ASCII  "Error: Overflow\n\x00"
+
+divZero: .ASCII  "Error: Division by zero\n\x00"
+
+introMsg: .ASCII "+---------------+\n| Calculator v1 |\n| by Larry T    |\n+---------------+\n\n\x00" 
 
 .end
