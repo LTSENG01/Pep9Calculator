@@ -1,12 +1,12 @@
 ; Created by Larry Tseng 2018.
-
+  
          STRO    introMsg,d  ; Display intro message
 
 ; Main routine (calls input and operation determiner subroutines, prints a newline, loops)
 main:    CALL    getInp
          CALL    detOp
 
-         LDBA    '\n',i      ; Newline
+reset:   LDBA    '\n',i      ; Newline
          STBA    charOut,d
 
          LDWA    0,i         ; Reset result
@@ -83,7 +83,17 @@ multInv: LDWA    num2,d
 
 ; Check if answer is zero
 divPre:  LDWA    num1,d
-         BREQ    answZero    ; Fall into divide
+         BREQ    answZero
+
+         BRLT    divInv1
+
+         LDWA    num2,d
+         BRLT    divInv2
+
+         LDWA    num1,d
+         SUBA    num2,d
+
+         BRLT    answZero 
 
 ; Division subroutine (Loops, subtracts second num from first num, increments result)  
 divide:  LDWA    num2,d 
@@ -112,7 +122,7 @@ divInv1: NEGA                ; If num1 is negative, negate it
          LDWA    num1Neg,d   ; Set num1Neg flag to 1
          ADDA    1,i         
          STWA    num1Neg,d
-         BR      divide
+         BR      divPre
 
 ; Negate the 2nd number
 divInv2: NEGA                ; If num2 is negative, negate it
@@ -120,7 +130,7 @@ divInv2: NEGA                ; If num2 is negative, negate it
          LDWA    num2Neg,d   ; Set num2Neg flag to 1
          ADDA    1,i
          STWA    num2Neg,d
-         BR      divide
+         BR      divPre
 
 ; Checks if any numbers are negative
 checkNeg:LDWA    num1Neg,d
@@ -130,7 +140,7 @@ checkNeg:LDWA    num1Neg,d
          LDWA    num1Neg,d
          ORA     num2Neg,d   ; 1 if either are negative
          BRGT    printNeg
-         RET
+         BR      outAns2
 
 ; If answer is automatically zero, print it out
 answZero:LDWA    0,i
@@ -150,7 +160,7 @@ resetNeg:LDWA    0,i
          STWA    isNeg,d     ; reset isNeg to 0
          STWA    num1Neg,d
          STWA    num2Neg,d
-         RET
+         BR      checkNeg
 
 ; Prints error message when dividing by zero
 prErrZer:STRO    divZero,d
@@ -179,9 +189,12 @@ sub:     LDWA    num1,d
 
 ; Outputs the answer (Prints out an = sign and the answer)
 outAnsw: STRO    eqSign,d
-         CALL    checkNeg
-         DECO    result,d
+         CALL    outAns2
          RET
+
+outAns2: BRNE    checkNeg
+         DECO    result,d
+         BR      reset
 
 ; Overflow error message
 prOver:  STRO    overMsg,d
