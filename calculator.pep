@@ -1,6 +1,6 @@
 ; Created by Larry Tseng 2018.
 
-;         STRO    introMsg,d  ; Display intro message
+         STRO    introMsg,d  ; Display intro message
 
 ; Main routine (calls input and operation determiner subroutines, prints a newline, loops)
 main:    CALL    getInp
@@ -201,6 +201,6 @@ overMsg: .ASCII  "Error: Overflow\n\x00"
 
 divZero: .ASCII  "Error: Division by zero\n\x00"
 
-; introMsg: .ASCII "+---------------+\n| Calculator v1 |\n| by Larry T    |\n+---------------+\n\n\x00" 
+introMsg: .ASCII "+---------------+\n| Calculator v1 |\n| by Larry T    |\n+---------------+\n\n\x00" 
 
 .end
