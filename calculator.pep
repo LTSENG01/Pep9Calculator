@@ -1,6 +1,6 @@
 ; Created by Larry Tseng 2018.
 
-         STRO    introMsg,d  ; Display intro message
+;         STRO    introMsg,d  ; Display intro message
 
 ; Main routine (calls input and operation determiner subroutines, prints a newline, loops)
 main:    CALL    getInp
@@ -39,7 +39,7 @@ detOp:   LDWA    0,i         ; Reset accumulator
          LDWA    0,i         ; Reset accumulator
          LDBA    oper,d      ; Go to Divide
          SUBA    47,i        ; (DEC 47 from ASCII Table)
-         BREQ    divide
+         BREQ    divPre
 
          LDWA    0,i         ; Reset accumulator
          LDBA    oper,d      ; Go to Add
@@ -81,16 +81,16 @@ multInv: LDWA    num2,d
          STWA    num1,d
          BR      mult
 
+; Check if answer is zero
+divPre:  LDWA    num1,d
+         BREQ    answZero    ; Fall into divide
+
 ; Division subroutine (Loops, subtracts second num from first num, increments result)  
 divide:  LDWA    num2,d 
          BREQ    prErrZer     
          BRLT    divInv2
 
-         SUBA    num1,d      ; If num2 > num1
-         BRGT    answZero    ; Answer = 0    
-
          LDWA    num1,d      ; Load the starting number
-         BREQ    answZero    ; If num1 = 0, Answer = 0
          BRLT    divInv1
 
          LDWA    num1,d
@@ -145,7 +145,7 @@ printNeg:LDBA    '-',i
                
          BR      checkNeg
 
-; resets the divisio negative flags
+; resets the division negative flags
 resetNeg:LDWA    0,i
          STWA    isNeg,d     ; reset isNeg to 0
          STWA    num1Neg,d
@@ -201,6 +201,6 @@ overMsg: .ASCII  "Error: Overflow\n\x00"
 
 divZero: .ASCII  "Error: Division by zero\n\x00"
 
-introMsg: .ASCII "+---------------+\n| Calculator v1 |\n| by Larry T    |\n+---------------+\n\n\x00" 
+; introMsg: .ASCII "+---------------+\n| Calculator v1 |\n| by Larry T    |\n+---------------+\n\n\x00" 
 
 .end
