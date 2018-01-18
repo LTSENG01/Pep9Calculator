@@ -83,7 +83,10 @@ multInv: LDWA    num2,d
 
 ; Check if answer is zero
 divPre:  LDWA    num1,d
-         BREQ    answZero    ; Fall into divide
+         BREQ    answZero
+
+         SUBA    num2,d
+         BRLT    answZero    ; Fall into divide
 
 ; Division subroutine (Loops, subtracts second num from first num, increments result)  
 divide:  LDWA    num2,d 
